@@ -3,7 +3,7 @@
 const Heap = require('heap');
 const LogSourceBuffer = require('./log-source-buffer');
 // BUFFERSIZE 
-let BUFFERSIZE = 3
+let BUFFERSIZE = 4
 // Print all entries, across all of the *async* sources, in chronological order.
 
 
@@ -25,7 +25,8 @@ in batches.
     buffer is drained or (2) the buffer is loading.
     - if the buffer is empty and is not drained, we have to rehydrate it by populating
     the next batch
-6. we keep doing this until we have no more logs to process
+6. we keep doing this until we have no more logs to process - that is while some
+    buffers are not drained and not empty or the heap is not empty
 
 
 Why is this an optimization:
@@ -124,7 +125,7 @@ module.exports = (logSources, printer) => {
 
     
     // while heap is not empty
-    while (!minHeap.empty()){
+    while (buffers.some(buffer => !buffer.drained && !buffer.isEmpty()) || !minHeap.empty()) {
       // pop the top of the heap
       const logNode = minHeap.pop()
       let logEntry = logNode.log
